@@ -385,3 +385,74 @@ func FindModelFieldByTFSdkTag(model any, tagName string) (string, bool) {
 
 	return "", false
 }
+
+func ConvertMapToHCL(data map[string]any) string {
+	var keyValues []string
+
+	// Iterate through all key-value pairs in the map
+	for key, value := range data {
+		// Format the value based on its type
+		var formattedValue string
+
+		switch v := value.(type) {
+		case []map[string]any:
+			// Handle slice of maps
+			formattedValue = ConvertSliceOfMapsToHCL(v)
+		case map[string]any:
+			// Handle nested map
+			formattedValue = ConvertMapToHCL(v)
+		case string:
+			formattedValue = fmt.Sprintf("%q", v)
+		case int, int64, float64:
+			formattedValue = fmt.Sprintf("%v", v)
+		case bool:
+			formattedValue = fmt.Sprintf("%t", v)
+		default:
+			formattedValue = fmt.Sprintf("%q", fmt.Sprintf("%v", v))
+		}
+
+		keyValues = append(keyValues, fmt.Sprintf("  %s = %s", key, formattedValue))
+	}
+
+	return fmt.Sprintf("{\n%s\n}", strings.Join(keyValues, "\n"))
+}
+
+func ConvertSliceOfMapsToHCL(data []map[string]any) string {
+	var blocks []string
+
+	for _, item := range data {
+		var keyValues []string
+
+		// Iterate through all key-value pairs in the map
+		for key, value := range item {
+			// Format the value based on its type
+			var formattedValue string
+
+			switch v := value.(type) {
+			case []map[string]any:
+				// Handle nested slice of maps recursively
+				nestedHCL := ConvertSliceOfMapsToHCL(v)
+				formattedValue = nestedHCL
+			case string:
+				formattedValue = fmt.Sprintf("%q", v)
+			case int, int64, float64:
+				formattedValue = fmt.Sprintf("%v", v)
+			case bool:
+				formattedValue = fmt.Sprintf("%t", v)
+			default:
+				formattedValue = fmt.Sprintf("%q", fmt.Sprintf("%v", v))
+			}
+
+			keyValues = append(keyValues, fmt.Sprintf("        %s = %s", key, formattedValue))
+		}
+
+		block := fmt.Sprintf("      {\n%s\n      }", strings.Join(keyValues, "\n"))
+		blocks = append(blocks, block)
+	}
+
+	result := fmt.Sprintf(`[
+%s
+    ]`, strings.Join(blocks, ",\n"))
+
+	return result
+}
