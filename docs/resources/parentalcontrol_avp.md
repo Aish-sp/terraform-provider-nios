@@ -22,8 +22,8 @@ resource "nios_parentalcontrol_avp" "attribute_value_pair_basic" {
 
 // Create an Attribute Value Pair with Additional Fields
 resource "nios_parentalcontrol_avp" "attribute_value_pair_additional_fields" {
-  name          = "avp_addional_fields"
-  type          = 37
+  name          = "avp_additional_fields"
+  type          = 43
   value_type    = "INTEGER64"
   comment       = "Example AVP"
   domain_types  = ["SUBS_ID", "IP_SPACE_DIS"]
